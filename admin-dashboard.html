@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المشرف | شبكة رعاية المسنين</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', sans-serif; background: #eef5ff; padding: 1.5rem; }
+        .container { max-width: 1200px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1); }
+        h1 { color: #1e4b8f; }
+        .grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.5rem 0; }
+        .card { background: #f8fafc; border-radius: 1.5rem; padding: 1.2rem; flex: 1; min-width: 180px; text-align: center; cursor: pointer; border: 1px solid #cbd5e1; transition: 0.2s; }
+        .card:hover { background: #e6f0ff; transform: translateY(-3px); }
+        .btn { background: #0f67ff; color: white; border: none; padding: 8px 16px; border-radius: 60px; cursor: pointer; margin: 0.5rem; }
+        .btn-danger { background: #dc2626; }
+        footer { margin-top: 2rem; text-align: center; border-top: 1px solid #cbd5e1; padding-top: 1rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛡️ لوحة تحكم المشرف</h1>
+    <div class="grid">
+        <div class="card" onclick="showVerifications()">📄 طلبات التحقق من المتطوعين</div>
+        <div class="card" onclick="location.href='ledger.html'">📊 سجل المعاملات</div>
+        <div class="card" onclick="alert('محاكاة: عرض جميع المستخدمين')">👥 إدارة المستخدمين</div>
+        <div class="card" onclick="alert(`آخر SOS: ${JSON.parse(localStorage.getItem('sosLog'))?.slice(-1)[0]?.time || 'لا توجد'}`)">🚨 سجل الطوارئ</div>
+    </div>
+    <div id="verificationPanel"></div>
+    <footer><button class="btn btn-danger" onclick="logout()">تسجيل الخروج</button> <a href="index.html">🏠 الرئيسية</a></footer>
+</div>
+<script>
+    function getUser() { return JSON.parse(sessionStorage.getItem('currentUser')); }
+    let user = getUser();
+    if(!user || user.role !== 'admin') { alert('يجب تسجيل الدخول كمشرف'); window.location.href = 'index.html'; }
+    function showVerifications() {
+        let pending = JSON.parse(localStorage.getItem('verificationRequests')) || [];
+        let html = '<h2>طلبات التحقق المعلقة</h2>';
+        if(pending.length===0) html += '<div class="card">لا توجد طلبات جديدة</div>';
+        else pending.forEach((req,idx)=> { html += `<div class="card">${req.name} - ${req.docType} <button class="btn" onclick="approve(${idx})">✅ قبول</button> <button class="btn btn-danger" onclick="reject(${idx})">❌ رفض</button></div>`; });
+        document.getElementById('verificationPanel').innerHTML = html;
+    }
+    window.approve = (idx) => { let pending = JSON.parse(localStorage.getItem('verificationRequests')) || []; pending.splice(idx,1); localStorage.setItem('verificationRequests', JSON.stringify(pending)); showVerifications(); alert('تم اعتماد المتطوع'); };
+    window.reject = (idx) => { let pending = JSON.parse(localStorage.getItem('verificationRequests')) || []; pending.splice(idx,1); localStorage.setItem('verificationRequests', JSON.stringify(pending)); showVerifications(); alert('تم رفض الطلب'); };
+    function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

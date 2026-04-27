@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدولة زيارة</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef5ff; padding: 2rem; }
+        .container { max-width: 600px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 30px; border: 1px solid #ccc; }
+        .btn { background: #0f67ff; color: white; padding: 12px; border: none; border-radius: 40px; width: 100%; cursor: pointer; }
+        .cost { background: #fef3c7; padding: 0.5rem; border-radius: 50px; text-align: center; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📅 جدولة زيارة مع متطوع</h2>
+    <div class="cost">💰 تكلفة الزيارة: <strong>50 نقطة فضية</strong> (تخصم من رصيدك)</div>
+    <form id="scheduleForm">
+        <label>التاريخ والوقت:</label><input type="datetime-local" id="datetime" required>
+        <label>نوع الخدمة:</label><select id="service"><option>مساعدة منزلية</option><option>جلسة رفيق</option><option>توصيل دواء</option></select>
+        <button type="submit" class="btn">تأكيد الحجز وخصم النقاط</button>
+    </form>
+    <a href="senior-dashboard.html" style="display:block; text-align:center; margin-top:1rem;">رجوع</a>
+</div>
+<script>
+    function getUser() { return JSON.parse(sessionStorage.getItem('currentUser')); }
+    function showToast(msg, isErr) { let t=document.createElement('div'); t.innerText=msg; t.style.position='fixed'; t.style.bottom='20px'; t.style.backgroundColor=isErr?'#dc2626':'#0f67ff'; t.style.color='white'; t.style.padding='12px'; t.style.borderRadius='60px'; t.style.left='20px'; t.style.right='20px'; t.style.textAlign='center'; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
+    document.getElementById('scheduleForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        let user = getUser();
+        if(!user) return;
+        let cost = 50;
+        if(user.silverPoints >= cost) {
+            user.silverPoints -= cost;
+            sessionStorage.setItem('currentUser', JSON.stringify(user));
+            let visit = { id: Date.now(), datetime: document.getElementById('datetime').value, service: document.getElementById('service').value, seniorId: user.phone, status: 'محجوز', volunteerId: null };
+            let visits = JSON.parse(localStorage.getItem('scheduledVisits')) || [];
+            visits.push(visit);
+            localStorage.setItem('scheduledVisits', JSON.stringify(visits));
+            showToast('تم الحجز بنجاح! خصم 50 نقطة');
+            setTimeout(()=>window.location.href='senior-dashboard.html',1500);
+        } else showToast('رصيد النقاط غير كافٍ', true);
+    });
+</script>
+</body>
+</html>

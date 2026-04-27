@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>شبكة رعاية المسنين | تسجيل الدخول</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', system-ui, sans-serif; background: #eef5ff; color: #1e2a3e; padding: 1.5rem; line-height: 1.5; }
+        .container { max-width: 1300px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1); }
+        h1 { font-size: 2.2rem; background: linear-gradient(135deg, #1e4b8f, #0f67ff); background-clip: text; -webkit-background-clip: text; color: transparent; margin-bottom: 0.5rem; }
+        .sub { color: #2c5282; font-size: 1rem; border-bottom: 2px solid #cbd5e1; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        .card { background: white; border-radius: 1.5rem; padding: 1rem 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; transition: 0.2s; text-align: center; font-weight: bold; cursor: pointer; }
+        .card.selected { border: 3px solid #0f67ff; background-color: #e6f0ff; transform: scale(1.02); }
+        .btn { background: #0f67ff; border: none; color: white; font-size: 1rem; font-weight: 600; padding: 12px 24px; border-radius: 60px; cursor: pointer; display: inline-block; text-align: center; width: 100%; }
+        input { width: 100%; padding: 12px; border-radius: 60px; border: 1px solid #cbd5e1; margin-top: 6px; margin-bottom: 12px; font-size: 1rem; }
+        footer { margin-top: 2rem; text-align: center; border-top: 1px solid #cbd5e1; padding-top: 1rem; font-size: 0.8rem; }
+        .role-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 2rem; }
+        @media (max-width: 640px) { body { padding: 0.8rem; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🤝 شبكة رعاية المسنين والجيران</h1>
+    <div class="sub">تطوع من أجل من حولك | احصل على نقاط فضية (SilverPoints)</div>
+    <div style="max-width: 700px; margin: 0 auto;">
+        <h2>📱 اختر دورك ثم سجل الدخول</h2>
+        <div class="role-group" id="roleGroup">
+            <div class="card" data-role="senior">🧓 مسن</div>
+            <div class="card" data-role="volunteer">🤝 متطوع (Pal)</div>
+            <div class="card" data-role="proxy">👨‍👩‍👦 وكيل عائلة</div>
+            <div class="card" data-role="admin">🛡️ مشرف</div>
+        </div>
+        <div style="background: #f9f9ff; padding: 1.5rem; border-radius: 2rem;">
+            <label for="phone">📞 رقم الهاتف:</label>
+            <input type="tel" id="phone" placeholder="مثال: 01012345678">
+            <button id="loginBtn" class="btn">📲 إرسال رمز OTP (محاكاة)</button>
+            <div id="otpSection" style="display: none; margin-top: 15px;">
+                <label>🔐 أدخل الرمز (1234):</label>
+                <input type="text" id="otpCode" placeholder="1234">
+                <button id="verifyBtn" class="btn" style="background: #10b981;">✔️ تحقق</button>
+            </div>
+        </div>
+    </div>
+    <footer>⚠️ هذا العرض تجريبي لمشروع تخرج - يتم محاكاة جميع العمليات بدون خادم حقيقي.</footer>
+</div>
+<script>
+    let selectedRole = null;
+    document.querySelectorAll('[data-role]').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('[data-role]').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedRole = card.getAttribute('data-role');
+        });
+    });
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        if (!selectedRole) { alert('الرجاء اختيار دورك أولاً'); return; }
+        const phone = document.getElementById('phone').value;
+        if (!phone) { alert('أدخل رقم الهاتف'); return; }
+        document.getElementById('otpSection').style.display = 'block';
+        alert(`تم إرسال رمز OTP إلى ${phone} (رمز تجريبي: 1234)`);
+    });
+    document.getElementById('verifyBtn').addEventListener('click', () => {
+        const otp = document.getElementById('otpCode').value;
+        if (otp !== '1234') { alert('رمز OTP غير صحيح. استخدم 1234'); return; }
+        const phone = document.getElementById('phone').value;
+        let userData = {
+            role: selectedRole,
+            phone: phone,
+            name: selectedRole === 'senior' ? 'أحمد المسن' : (selectedRole === 'volunteer' ? 'محمد المتطوع' : (selectedRole === 'proxy' ? 'سارة الوكيل' : 'المشرف العام')),
+            silverPoints: selectedRole === 'volunteer' ? 350 : (selectedRole === 'admin' ? 0 : 120),
+            verified: selectedRole !== 'volunteer'
+        };
+        sessionStorage.setItem('currentUser', JSON.stringify(userData));
+        if (selectedRole === 'senior') window.location.href = 'senior-dashboard.html';
+        else if (selectedRole === 'volunteer') window.location.href = 'volunteer-dashboard.html';
+        else if (selectedRole === 'proxy') window.location.href = 'proxy-dashboard.html';
+        else if (selectedRole === 'admin') window.location.href = 'admin-dashboard.html';
+    });
+</script>
+</body>
+</html>

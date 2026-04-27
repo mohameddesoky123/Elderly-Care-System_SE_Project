@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المعاملات</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef5ff; padding: 2rem; }
+        .container { max-width: 800px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .tx-item { background: #f8fafc; border-radius: 1rem; padding: 0.8rem; margin-bottom: 0.5rem; border-right: 4px solid #0f67ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📜 سجل المعاملات (Ledger)</h2>
+    <div id="txList">جاري التحميل...</div>
+    <a href="javascript:history.back()" style="display:block; text-align:center; margin-top:1rem;">⬅️ رجوع</a>
+</div>
+<script>
+    let sampleTx = JSON.parse(localStorage.getItem('ledger')) || [];
+    if(sampleTx.length === 0) {
+        sampleTx = [{date:'2026-04-01', desc:'مكافأة تسجيل', points:100, type:'إيداع'},{date:'2026-04-03', desc:'حجز زيارة', points:-50, type:'خصم'}];
+        localStorage.setItem('ledger', JSON.stringify(sampleTx));
+    }
+    document.getElementById('txList').innerHTML = sampleTx.map(tx => `<div class="tx-item">📆 ${tx.date} : ${tx.desc} → ${tx.points>0 ? '+' : ''}${tx.points} نقطة</div>`).join('');
+</script>
+</body>
+</html>

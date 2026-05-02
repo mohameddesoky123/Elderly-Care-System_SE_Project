@@ -1,1 +1,0 @@
-# Elderly-Care-System_SE_Project

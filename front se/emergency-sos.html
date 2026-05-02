@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS طوارئ | Senior Care</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', sans-serif; background: #eef5ff; padding: 2rem; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .lang-switch { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem; }
+        .lang-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 60px; cursor: pointer; font-weight: bold; }
+        .lang-btn.active { background: #2b6ed7; color: white; }
+        .sos-btn { background: #dc2626; color: white; font-size: 2rem; padding: 1rem 2rem; border-radius: 100px; border: none; cursor: pointer; width: 100%; margin: 2rem 0; transition: 0.2s; }
+        .sos-btn:hover { transform: scale(1.02); background: #b91c1c; }
+        .result { margin-top: 1rem; }
+        footer { margin-top: 2rem; }
+        a { color: #1e4b8f; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="lang-switch">
+        <button id="langArBtn" class="lang-btn active">🇸🇦 عربي</button>
+        <button id="langEnBtn" class="lang-btn">🇬🇧 English</button>
+    </div>
+    <h1 id="title" style="color:#dc2626;" data-ar="🚨 حالة طوارئ" data-en="🚨 Emergency">🚨 حالة طوارئ</h1>
+    <p id="description" data-ar="اضغط الزر أدناه لإرسال تنبيه عاجل إلى: وكيل العائلة، المشرف، والمتطوعين القريبين" data-en="Press the button below to send an urgent alert to: Family Proxy, Admin, and nearby volunteers">اضغط الزر أدناه لإرسال تنبيه عاجل إلى: وكيل العائلة، المشرف، والمتطوعين القريبين</p>
+    <button id="sosBtn" class="sos-btn" data-ar="🆘 إرسال SOS" data-en="🆘 Send SOS">🆘 إرسال SOS</button>
+    <div id="result" class="result"></div>
+    <footer><a href="senior-dashboard.html" id="backLink" data-ar="← رجوع" data-en="← Back">← رجوع</a></footer>
+</div>
+<script>
+    let currentLang = localStorage.getItem('appLang') || 'ar';
+    let user = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!user) {
+        alert(currentLang === 'ar' ? 'الرجاء تسجيل الدخول أولاً' : 'Please login first');
+        window.location.href = 'index.html';
+    }
+
+    function translatePage(lang) {
+        document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        document.querySelectorAll('[data-ar][data-en]').forEach(el => {
+            el.innerText = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+        });
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('appLang', lang);
+        translatePage(lang);
+        document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+        document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+    }
+
+    document.getElementById('langArBtn').onclick = () => setLanguage('ar');
+    document.getElementById('langEnBtn').onclick = () => setLanguage('en');
+
+    document.getElementById('sosBtn').addEventListener('click', () => {
+        // Get senior's mock location (from profile or default)
+        let seniorLat = 30.0444;
+        let seniorLng = 31.2357;
+        // Try to get last known location from scheduled visits or profile (use saved if any)
+        let visits = JSON.parse(localStorage.getItem('scheduledVisits')) || [];
+        let lastVisit = visits.find(v => v.seniorId === user.phone);
+        if (lastVisit && lastVisit.lat && lastVisit.lng) {
+            seniorLat = lastVisit.lat;
+            seniorLng = lastVisit.lng;
+        }
+        // Create SOS alert
+        let sosAlert = {
+            id: Date.now(),
+            seniorId: user.phone,
+            seniorName: user.name,
+            time: new Date().toISOString(),
+            lat: seniorLat,
+            lng: seniorLng,
+            status: 'active' // active, responded, resolved
+        };
+        let sosAlerts = JSON.parse(localStorage.getItem('sosAlerts')) || [];
+        sosAlerts.push(sosAlert);
+        localStorage.setItem('sosAlerts', JSON.stringify(sosAlerts));
+        
+        // Also add to SOS log (for admin)
+        let sosLog = JSON.parse(localStorage.getItem('sosLog')) || [];
+        sosLog.push({ time: sosAlert.time, userId: user.phone, role: user.role, lat: seniorLat, lng: seniorLng });
+        localStorage.setItem('sosLog', JSON.stringify(sosLog));
+        
+        // Show result message
+        let msg = currentLang === 'ar' ? '✅ تم إرسال إشارة الاستغاثة مع موقعك (محاكاة). سيتم إشعار المتطوعين القريبين.' : '✅ SOS alert sent with your location (simulated). Nearby volunteers will be notified.';
+        document.getElementById('result').innerHTML = `<div style="background:#fee2e2; padding:1rem; border-radius:1rem;">${msg}</div>`;
+        
+        // Optionally store notification for volunteers (they will fetch from sosAlerts)
+    });
+
+    setLanguage(currentLang);
+</script>
+</body>
+</html>

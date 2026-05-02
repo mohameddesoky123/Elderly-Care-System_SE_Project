@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدولة زيارة | Senior Care</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', sans-serif; background: #eef5ff; padding: 2rem; }
+        .container { max-width: 900px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .lang-switch { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem; }
+        .lang-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 60px; cursor: pointer; font-weight: bold; }
+        .lang-btn.active { background: #2b6ed7; color: white; }
+        .cost-badge { background: #fef3c7; padding: 0.5rem; border-radius: 50px; text-align: center; margin: 1rem 0; }
+        #map { height: 300px; width: 100%; border-radius: 1rem; margin: 1rem 0; border: 1px solid #cbd5e1; }
+        .location-tag { background: #e2e8f0; border-radius: 2rem; padding: 0.5rem 1rem; margin: 0.5rem 0; cursor: pointer; display: inline-block; margin-left: 0.5rem; }
+        .location-tag.selected { background: #2b6ed7; color: white; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 30px; border: 1px solid #ccc; }
+        .btn { background: #1e4b8f; color: white; padding: 10px; border: none; border-radius: 40px; width: 100%; cursor: pointer; }
+        footer { margin-top: 2rem; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="lang-switch">
+        <button id="langArBtn" class="lang-btn active">🇸🇦 عربي</button>
+        <button id="langEnBtn" class="lang-btn">🇬🇧 English</button>
+    </div>
+    <h2 id="pageTitle" data-ar="📅 جدولة زيارة جديدة" data-en="📅 Schedule New Visit">📅 جدولة زيارة جديدة</h2>
+    <div class="cost-badge" id="costMsg" data-ar="💰 تكلفة الزيارة: 50 نقطة فضية (تخصم من رصيدك وتوضع في حساب الضمان حتى إتمام الزيارة)" data-en="💰 Visit cost: 50 SilverPoints (deducted from your balance and held in escrow until completion)">💰 تكلفة الزيارة: 50 نقطة فضية (تخصم من رصيدك وتوضع في حساب الضمان حتى إتمام الزيارة)</div>
+
+    <div id="map"></div>
+
+    <div class="location-options">
+        <div class="location-tag" data-lat="30.0444" data-lng="31.2357" data-name="المهندسين، شارع وادي النيل"><span data-ar="🧓 منزل المسن (المهندسين)" data-en="🧓 Senior's home (Mohandiseen)">🧓 منزل المسن (المهندسين)</span></div>
+        <div class="location-tag" data-lat="30.0520" data-lng="31.2430" data-name="الدقي، شارع الثورة"><span data-ar="🤝 موقع المتطوع محمد (الدقي)" data-en="🤝 Volunteer Mohamed's location (Dokki)">🤝 موقع المتطوع محمد (الدقي)</span></div>
+    </div>
+
+    <form id="scheduleForm">
+        <div class="form-group">
+            <label id="locationLabel" data-ar="📍 العنوان أو المنطقة" data-en="📍 Address or area">📍 العنوان أو المنطقة</label>
+            <input type="text" id="locationInput" required>
+            <input type="hidden" id="latInput" value="0">
+            <input type="hidden" id="lngInput" value="0">
+        </div>
+
+        <div class="form-group">
+            <label id="serviceLabel" data-ar="🛠️ نوع الخدمة" data-en="🛠️ Service Type">🛠️ نوع الخدمة</label>
+            <select id="service">
+                <option value="مساعدة منزلية" data-ar="مساعدة منزلية" data-en="Home help">مساعدة منزلية</option>
+                <option value="مرافقة للطبيب" data-ar="مرافقة للطبيب" data-en="Doctor escort">مرافقة للطبيب</option>
+                <option value="توصيل طعام/دواء" data-ar="توصيل طعام/دواء" data-en="Food/medicine delivery">توصيل طعام/دواء</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label id="datetimeLabel" data-ar="📆 التاريخ والوقت" data-en="📆 Date & Time">📆 التاريخ والوقت</label>
+            <input type="datetime-local" id="datetime" required>
+        </div>
+
+        <div class="form-group">
+            <label id="volunteerLabel" data-ar="🗺️ اختر المتطوع المناسب" data-en="🗺️ Select a suitable volunteer">🗺️ اختر المتطوع المناسب</label>
+            <select id="volunteerSelect" required>
+                <option value="">-- اختر --</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn" data-ar="تأكيد الحجز وخصم النقاط" data-en="Confirm Booking & Deduct Points">تأكيد الحجز وخصم النقاط</button>
+    </form>
+    <footer><a href="senior-dashboard.html" id="backLink" data-ar="← رجوع" data-en="← Back">← رجوع</a></footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let currentLang = localStorage.getItem('appLang') || 'ar';
+    let user = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!user || (user.role !== 'senior' && user.role !== 'proxy')) {
+        alert(currentLang === 'ar' ? 'يجب تسجيل الدخول كمسن أو وكيل' : 'Please login as senior or proxy');
+        window.location.href = 'index.html';
+    }
+
+    // Volunteers mock data
+    const volunteers = [
+        { name: 'محمد علي', phone: '0111000111', rating: 4.8, location: 'الزمالك', distance: 1.2, lat: 30.0480, lng: 31.2220, verified: true },
+        { name: 'أحمد خالد', phone: '0112000222', rating: 4.9, location: 'المهندسين', distance: 0.8, lat: 30.0520, lng: 31.2430, verified: true }
+    ];
+
+    let map, marker;
+
+    function initMap() {
+        const defaultLoc = [30.0444, 31.2357];
+        map = L.map('map').setView(defaultLoc, 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap & CartoDB'
+        }).addTo(map);
+        marker = L.marker(defaultLoc, { draggable: true }).addTo(map);
+        marker.on('dragend', function(e) {
+            let pos = marker.getLatLng();
+            document.getElementById('latInput').value = pos.lat;
+            document.getElementById('lngInput').value = pos.lng;
+            document.getElementById('locationInput').value = `${currentLang === 'ar' ? 'موقع مخصص' : 'Custom location'} (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`;
+            clearSelectedTags();
+        });
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            document.getElementById('latInput').value = e.latlng.lat;
+            document.getElementById('lngInput').value = e.latlng.lng;
+            document.getElementById('locationInput').value = `${currentLang === 'ar' ? 'موقع محدد على الخريطة' : 'Location selected on map'} (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`;
+            clearSelectedTags();
+        });
+    }
+
+    function clearSelectedTags() {
+        document.querySelectorAll('.location-tag').forEach(tag => tag.classList.remove('selected'));
+    }
+
+    function renderVolunteers() {
+        let select = document.getElementById('volunteerSelect');
+        select.innerHTML = '<option value="">-- اختر --</option>';
+        volunteers.forEach(v => {
+            let option = document.createElement('option');
+            option.value = JSON.stringify({ phone: v.phone, name: v.name, lat: v.lat, lng: v.lng });
+            option.textContent = `${v.name} ⭐ ${v.rating} 📍 ${v.location} (${v.distance} كم)`;
+            select.appendChild(option);
+        });
+    }
+
+    // Predefined locations
+    document.querySelectorAll('.location-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            let lat = parseFloat(tag.getAttribute('data-lat'));
+            let lng = parseFloat(tag.getAttribute('data-lng'));
+            let name = tag.getAttribute('data-name');
+            if (!isNaN(lat) && !isNaN(lng)) {
+                map.setView([lat, lng], 14);
+                marker.setLatLng([lat, lng]);
+                document.getElementById('latInput').value = lat;
+                document.getElementById('lngInput').value = lng;
+                document.getElementById('locationInput').value = name;
+                // Highlight selected tag
+                document.querySelectorAll('.location-tag').forEach(t => t.classList.remove('selected'));
+                tag.classList.add('selected');
+            }
+        });
+    });
+
+    // Translation
+    function translatePage(lang) {
+        document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        document.querySelectorAll('[data-ar][data-en]').forEach(el => {
+            el.innerText = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+        });
+        document.querySelectorAll('.location-tag span').forEach(span => {
+            span.innerText = lang === 'ar' ? span.getAttribute('data-ar') : span.getAttribute('data-en');
+        });
+        document.querySelectorAll('#service option').forEach(opt => {
+            opt.innerText = lang === 'ar' ? opt.getAttribute('data-ar') : opt.getAttribute('data-en');
+        });
+        // Update volunteer dropdown text (dynamically)
+        renderVolunteers();
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('appLang', lang);
+        translatePage(lang);
+        document.getElementById('langArBtn').classList.toggle('active', lang === 'ar');
+        document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+    }
+
+    document.getElementById('langArBtn').onclick = () => setLanguage('ar');
+    document.getElementById('langEnBtn').onclick = () => setLanguage('en');
+
+    // Form submission
+    document.getElementById('scheduleForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let selectedVolunteer = document.getElementById('volunteerSelect').value;
+        if (!selectedVolunteer) {
+            alert(currentLang === 'ar' ? 'الرجاء اختيار متطوع' : 'Please select a volunteer');
+            return;
+        }
+        let volunteer = JSON.parse(selectedVolunteer);
+        let locationName = document.getElementById('locationInput').value.trim();
+        if (!locationName) {
+            alert(currentLang === 'ar' ? 'الرجاء تحديد العنوان' : 'Please specify address');
+            return;
+        }
+        if (user.silverPoints < 50) {
+            alert(currentLang === 'ar' ? 'رصيد النقاط غير كافٍ (تحتاج 50 نقطة)' : 'Insufficient points (need 50)');
+            return;
+        }
+        // Deduct points
+        user.silverPoints -= 50;
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        // Create visit
+        let newVisit = {
+            id: Date.now(),
+            datetime: document.getElementById('datetime').value,
+            service: document.getElementById('service').value,
+            location: locationName,
+            lat: document.getElementById('latInput').value || 30.0444,
+            lng: document.getElementById('lngInput').value || 31.2357,
+            seniorId: user.phone,
+            seniorName: user.name,
+            volunteerId: volunteer.phone,
+            volunteerName: volunteer.name,
+            status: 'scheduled',
+            pointsHeld: 50
+        };
+        let visits = JSON.parse(localStorage.getItem('scheduledVisits')) || [];
+        visits.push(newVisit);
+        localStorage.setItem('scheduledVisits', JSON.stringify(visits));
+        alert(currentLang === 'ar' ? 'تم حجز الزيارة بنجاح!' : 'Visit booked successfully!');
+        window.location.href = 'senior-dashboard.html';
+    });
+
+    initMap();
+    renderVolunteers();
+    setLanguage(currentLang);
+</script>
+</body>
+</html>

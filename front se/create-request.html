@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب مساعدة جديد</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', sans-serif; background: linear-gradient(145deg, #e6f0fa, #c9ddf5); padding: 2rem; }
+        .container { max-width: 700px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .lang-switch { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem; }
+        .lang-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 60px; cursor: pointer; }
+        .lang-btn.active { background: #1e4b8f; color: white; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-weight: 600; color: #1e4b8f; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 60px; border: 1px solid #cbd5e1; }
+        .btn { background: linear-gradient(95deg, #1e4b8f, #2b6ed7); color: white; padding: 10px; border: none; border-radius: 60px; width: 100%; cursor: pointer; margin-top: 1rem; }
+        .image-preview { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+        .image-preview img { width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="lang-switch">
+        <button id="langAr" class="lang-btn active">🇸🇦 عربي</button>
+        <button id="langEn" class="lang-btn">🇬🇧 English</button>
+    </div>
+    <h2 data-ar="طلب مساعدة جديد" data-en="New Help Request">طلب مساعدة جديد</h2>
+    <form id="reqForm">
+        <div class="form-group">
+            <label data-ar="نوع المساعدة" data-en="Help Type">نوع المساعدة</label>
+            <select id="type">
+                <option value="تسوق">تسوق</option>
+                <option value="مرافقة طبية">مرافقة طبية</option>
+                <option value="تنظيف">تنظيف</option>
+                <option value="تعليم تكنولوجيا">تعليم تكنولوجيا</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label data-ar="الوقت المفضل" data-en="Preferred Time">الوقت المفضل</label>
+            <input type="datetime-local" id="preferredTime">
+        </div>
+        <div class="form-group">
+            <label data-ar="وصف تفصيلي" data-en="Description">وصف تفصيلي</label>
+            <textarea id="desc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label data-ar="رفع صور (اختياري)" data-en="Attach Images (Optional)">رفع صور (اختياري)</label>
+            <input type="file" id="images" accept="image/*" multiple>
+            <div id="imagePreview" class="image-preview"></div>
+        </div>
+        <button type="submit" class="btn" data-ar="إرسال الطلب" data-en="Submit Request">إرسال الطلب</button>
+    </form>
+    <div style="margin-top:1rem;"><a href="senior-dashboard.html" data-ar="رجوع" data-en="Back">رجوع</a></div>
+</div>
+<script>
+    let currentLang = localStorage.getItem('appLang') || 'ar';
+    let user = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!user || (user.role !== 'senior' && user.role !== 'proxy')) window.location.href = 'index.html';
+    function translate() {
+        document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+        document.querySelectorAll('[data-ar][data-en]').forEach(el => { el.innerText = currentLang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en'); });
+    }
+    function setLang(lang) { currentLang = lang; localStorage.setItem('appLang', lang); translate(); document.getElementById('langAr').classList.toggle('active', lang==='ar'); document.getElementById('langEn').classList.toggle('active', lang==='en'); }
+    document.getElementById('langAr').onclick = () => setLang('ar');
+    document.getElementById('langEn').onclick = () => setLang('en');
+    translate();
+
+    // Image preview
+    document.getElementById('images').addEventListener('change', function(e) {
+        let preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+        for (let file of e.target.files) {
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                let img = document.createElement('img');
+                img.src = ev.target.result;
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('reqForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let images = [];
+        let files = document.getElementById('images').files;
+        for (let i=0; i<files.length; i++) {
+            let reader = new FileReader();
+            reader.onload = (function(file) { return function(ev) { images.push(ev.target.result); }; })(files[i]);
+            reader.readAsDataURL(files[i]);
+        }
+        setTimeout(() => {
+            let newRequest = {
+                id: Date.now(),
+                type: document.getElementById('type').value,
+                preferredTime: document.getElementById('preferredTime').value,
+                description: document.getElementById('desc').value,
+                images: images,
+                date: new Date().toLocaleString(),
+                status: 'pending',
+                seniorId: user.phone,
+                seniorName: user.name
+            };
+            let requests = JSON.parse(localStorage.getItem('helpRequests')) || [];
+            requests.push(newRequest);
+            localStorage.setItem('helpRequests', JSON.stringify(requests));
+            alert(currentLang==='ar'?'تم إرسال الطلب':'Request submitted');
+            window.location.href = 'senior-dashboard.html';
+        }, 500);
+    });
+</script>
+</body>
+</html>

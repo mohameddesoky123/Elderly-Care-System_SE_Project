@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديد مواعيد الفراغ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Cairo', sans-serif; background: linear-gradient(145deg, #e0f0e8, #c8e0d9); padding: 2rem; }
+        .container { max-width: 800px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .lang-switch { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem; }
+        .lang-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 60px; cursor: pointer; }
+        .lang-btn.active { background: #1e4b8f; color: white; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-weight: 600; color: #1e4b8f; }
+        input { width: 100%; padding: 8px 14px; border-radius: 60px; border: 1px solid #cbd5e1; }
+        .btn { background: linear-gradient(95deg, #2ecc71, #27ae60); color: white; padding: 8px 16px; border: none; border-radius: 60px; cursor: pointer; margin-top: 0.5rem; }
+        .availability-list { margin-top: 2rem; }
+        .slot { background: #f0f9f0; border-radius: 1rem; padding: 0.5rem 1rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .delete-slot { background: #dc2626; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="lang-switch">
+        <button id="langAr" class="lang-btn active">🇸🇦 عربي</button>
+        <button id="langEn" class="lang-btn">🇬🇧 English</button>
+    </div>
+    <h2 data-ar="تحديد مواعيد الفراغ" data-en="Set Availability">تحديد مواعيد الفراغ</h2>
+    <div class="form-group">
+        <label data-ar="اختر تاريخ ووقت البدء" data-en="Start Date & Time">اختر تاريخ ووقت البدء</label>
+        <input type="datetime-local" id="startTime">
+    </div>
+    <div class="form-group">
+        <label data-ar="اختر تاريخ ووقت الانتهاء" data-en="End Date & Time">اختر تاريخ ووقت الانتهاء</label>
+        <input type="datetime-local" id="endTime">
+    </div>
+    <button id="addSlotBtn" class="btn" data-ar="إضافة موعد" data-en="Add Slot">إضافة موعد</button>
+
+    <div class="availability-list">
+        <h3 data-ar="مواعيد الفراغ الحالية" data-en="Current Availability">مواعيد الفراغ الحالية</h3>
+        <div id="slotsList"></div>
+    </div>
+    <div style="margin-top:1rem;"><a href="volunteer-dashboard.html" data-ar="رجوع" data-en="Back">رجوع</a></div>
+</div>
+<script>
+    let currentLang = localStorage.getItem('appLang') || 'ar';
+    let user = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!user || user.role !== 'volunteer') window.location.href = 'index.html';
+
+    function translate() {
+        document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+        document.querySelectorAll('[data-ar][data-en]').forEach(el => {
+            el.innerText = currentLang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+        });
+    }
+    function setLang(lang) { currentLang = lang; localStorage.setItem('appLang', lang); translate(); loadSlots(); }
+    document.getElementById('langAr').onclick = () => setLang('ar');
+    document.getElementById('langEn').onclick = () => setLang('en');
+    translate();
+
+    function loadSlots() {
+        let slots = JSON.parse(localStorage.getItem('volunteerAvailability')) || {};
+        let userSlots = slots[user.phone] || [];
+        let container = document.getElementById('slotsList');
+        if (userSlots.length === 0) container.innerHTML = `<p>${currentLang==='ar'?'لا توجد مواعيد مضافة':'No slots added'}</p>`;
+        else {
+            container.innerHTML = userSlots.map((slot, idx) => `
+                <div class="slot">
+                    <span>${slot.start} → ${slot.end}</span>
+                    <button class="delete-slot" data-idx="${idx}">✖</button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.delete-slot').forEach(btn => {
+                btn.onclick = (e) => {
+                    let idx = parseInt(btn.getAttribute('data-idx'));
+                    userSlots.splice(idx, 1);
+                    slots[user.phone] = userSlots;
+                    localStorage.setItem('volunteerAvailability', JSON.stringify(slots));
+                    loadSlots();
+                };
+            });
+        }
+    }
+
+    document.getElementById('addSlotBtn').onclick = () => {
+        let start = document.getElementById('startTime').value;
+        let end = document.getElementById('endTime').value;
+        if (!start || !end) {
+            alert(currentLang==='ar'?'يرجى ملء الحقول':'Please fill fields');
+            return;
+        }
+        if (new Date(start) >= new Date(end)) {
+            alert(currentLang==='ar'?'وقت البدء يجب أن يكون قبل وقت الانتهاء':'Start must be before end');
+            return;
+        }
+        let slots = JSON.parse(localStorage.getItem('volunteerAvailability')) || {};
+        if (!slots[user.phone]) slots[user.phone] = [];
+        slots[user.phone].push({ start, end });
+        localStorage.setItem('volunteerAvailability', JSON.stringify(slots));
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+        loadSlots();
+    };
+    loadSlots();
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شبكة رعاية المسنين والجيران</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Cairo', sans-serif;
+            min-height: 100vh;
+            position: relative;
+        }
+        /* فيديو الخلفية */
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2;
+            object-fit: cover;
+            filter: brightness(0.6);
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: -1;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.94);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+            margin-top: 5vh;
+            margin-bottom: 5vh;
+        }
+        .lang-switch { display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem; }
+        .lang-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 60px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .lang-btn.active { background: #1e4b8f; color: white; }
+        h1 { text-align: center; font-size: 2rem; background: linear-gradient(135deg, #1e4b8f, #e67e22, #2b6ed7); background-clip: text; -webkit-background-clip: text; color: transparent; margin-bottom: 0.5rem; }
+        .sub { text-align: center; color: #2c5282; margin-bottom: 2rem; font-size: 0.9rem; background: #fff8e7; display: inline-block; padding: 0.2rem 1rem; border-radius: 60px; margin: 0 auto 2rem; width: fit-content; }
+        .toggle-buttons { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
+        .toggle-btn { background: #f1f5f9; border: none; font-weight: bold; padding: 0.5rem 1.5rem; border-radius: 60px; cursor: pointer; transition: 0.2s; }
+        .toggle-btn.active { background: linear-gradient(95deg, #1e4b8f, #2b6ed7); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .form-box { background: #fefce8; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #fde68a; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.3rem; color: #1e4b8f; }
+        input, select { width: 100%; padding: 10px 14px; border-radius: 60px; border: 1px solid #cbd5e1; font-family: inherit; background: white; }
+        .btn { background: linear-gradient(95deg, #1e4b8f, #2b6ed7); color: white; padding: 10px; border: none; border-radius: 60px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:hover { transform: scale(1.01); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .otp-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .otp-group button { width: auto; background: #f59e0b; }
+        footer { text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #475569; }
+        .error-msg { color: #dc2626; margin-top: 0.5rem; text-align: center; }
+        .success-msg { color: #10b981; margin-top: 0.3rem; }
+        a { color: #1e4b8f; text-decoration: none; }
+        .forgot-link { text-align: left; margin-top: -0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop id="bg-video">
+        <source src="background.mp4" type="video/mp4">
+        <!-- إذا لم يوجد فيديو، اعرض صورة ثابتة -->
+        Your browser does not support video.
+    </video>
+    <div class="overlay"></div>
+
+    <div class="container">
+        <div class="lang-switch">
+            <button id="langAr" class="lang-btn active">🇸🇦 عربي</button>
+            <button id="langEn" class="lang-btn">🇬🇧 English</button>
+        </div>
+        <h1 id="mainTitle">🤝 شبكة رعاية المسنين والجيران</h1>
+        <div class="sub" id="subTitle">منصة مجتمعية تربط كبار السن بمتطوعين موثوقين</div>
+        <div class="toggle-buttons">
+            <button id="showLogin" class="toggle-btn active" data-ar="🔐 تسجيل الدخول" data-en="🔐 Login">🔐 تسجيل الدخول</button>
+            <button id="showSignup" class="toggle-btn" data-ar="📝 إنشاء حساب (OTP)" data-en="📝 Sign Up (OTP)">📝 إنشاء حساب (OTP)</button>
+        </div>
+        <div id="loginPanel" class="form-box">
+            <div class="form-group">
+                <label id="emailLabel" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+                <input type="email" id="loginEmail" placeholder="senior@test.com">
+            </div>
+            <div class="form-group">
+                <label id="passLabel" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                <input type="password" id="loginPassword" placeholder="********">
+            </div>
+            <div class="forgot-link">
+                <a href="reset-password.html" id="forgotLink" data-ar="نسيت كلمة السر؟" data-en="Forgot password?">نسيت كلمة السر؟</a>
+            </div>
+            <button id="doLogin" class="btn" data-ar="دخول" data-en="Login">دخول</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+        <div id="signupPanel" class="form-box" style="display:none;">
+            <div id="signupStep1">
+                <div class="form-group">
+                    <label data-ar="الاسم الكامل" data-en="Full Name">الاسم الكامل</label>
+                    <input type="text" id="signupName" placeholder="محمد أحمد">
+                </div>
+                <div class="form-group">
+                    <label data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+                    <input type="email" id="signupEmail" placeholder="new@example.com">
+                    <div class="otp-group"><button id="sendOtpBtn" style="background:#f59e0b;" data-ar="📨 إرسال OTP" data-en="📨 Send OTP">📨 إرسال OTP</button></div>
+                    <div id="otpSentMsg" class="success-msg"></div>
+                </div>
+                <div id="otpDiv" style="display:none;" class="form-group">
+                    <label data-ar="رمز OTP" data-en="OTP Code">رمز OTP</label>
+                    <div class="otp-group"><input type="text" id="otpCode" placeholder="123456"><button id="verifyOtpBtn" style="background:#10b981;" data-ar="تحقق" data-en="Verify">تحقق</button></div>
+                    <div id="otpVerifyMsg" class="success-msg"></div>
+                </div>
+            </div>
+            <div id="signupStep2" style="display:none;">
+                <div class="form-group"><label data-ar="كلمة المرور" data-en="Password">كلمة المرور</label><input type="password" id="signupPassword"></div>
+                <div class="form-group"><label data-ar="تأكيد كلمة المرور" data-en="Confirm Password">تأكيد كلمة المرور</label><input type="password" id="signupConfirm"></div>
+                <div class="form-group"><label data-ar="الدور" data-en="Role">الدور</label>
+                    <select id="signupRole">
+                        <option value="senior">🧓 مسن</option>
+                        <option value="volunteer">🤝 متطوع</option>
+                        <option value="proxy">👨‍👩‍👦 وكيل</option>
+                        <option value="admin">🛡️ مشرف</option>
+                    </select>
+                </div>
+                <div class="form-group"><label data-ar="رقم الهاتف (اختياري)" data-en="Phone (Optional)">رقم الهاتف</label><input type="text" id="signupPhone"></div>
+                <button id="doSignup" class="btn" data-ar="إنشاء الحساب" data-en="Create Account">إنشاء الحساب</button>
+            </div>
+            <div id="signupError" class="error-msg"></div>
+        </div>
+        <footer id="footerNote" data-ar="⚠️ تجريبي - رمز OTP هو 123456" data-en="⚠️ Demo - OTP code is 123456">⚠️ تجريبي - رمز OTP هو 123456</footer>
+    </div>
+
+    <script>
+        // ---------- الترجمة ----------
+        let currentLang = localStorage.getItem('appLang') || 'ar';
+        function translatePage(lang) {
+            document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            document.querySelectorAll('[data-ar][data-en]').forEach(el => {
+                el.innerText = lang === 'ar' ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+            });
+            document.getElementById('mainTitle').innerText = lang === 'ar' ? '🤝 شبكة رعاية المسنين والجيران' : '🤝 Senior Care & Neighborly Network';
+            document.getElementById('subTitle').innerText = lang === 'ar' ? 'منصة مجتمعية تربط كبار السن بمتطوعين موثوقين' : 'Community platform connecting seniors with trusted volunteers';
+            document.getElementById('footerNote').innerText = lang === 'ar' ? '⚠️ تجريبي - رمز OTP هو 123456' : '⚠️ Demo - OTP code is 123456';
+            document.getElementById('forgotLink').innerText = lang === 'ar' ? 'نسيت كلمة السر؟' : 'Forgot password?';
+        }
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('appLang', lang);
+            translatePage(lang);
+            document.getElementById('langAr').classList.toggle('active', lang === 'ar');
+            document.getElementById('langEn').classList.toggle('active', lang === 'en');
+        }
+        document.getElementById('langAr').onclick = () => setLanguage('ar');
+        document.getElementById('langEn').onclick = () => setLanguage('en');
+        setLanguage(currentLang);
+
+        // ---------- بيانات افتراضية ----------
+        if (!localStorage.getItem('users')) {
+            const defaultUsers = [
+                { email: 'senior@test.com', password: '1234', name: 'أحمد المسن', role: 'senior', phone: '01001111111', silverPoints: 150, verified: true, active: true },
+                { email: 'volunteer@test.com', password: '1234', name: 'محمد المتطوع', role: 'volunteer', phone: '01002222222', silverPoints: 350, verified: false, active: true },
+                { email: 'proxy@test.com', password: '1234', name: 'سارة الوكيل', role: 'proxy', phone: '01003333333', silverPoints: 200, verified: true, active: true },
+                { email: 'admin@test.com', password: '1234', name: 'المشرف العام', role: 'admin', phone: '01004444444', silverPoints: 0, verified: true, active: true }
+            ];
+            localStorage.setItem('users', JSON.stringify(defaultUsers));
+        }
+
+        // ---------- تسجيل الدخول ----------
+        document.getElementById('doLogin').onclick = () => {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const users = JSON.parse(localStorage.getItem('users'));
+            const user = users.find(u => u.email === email && u.password === password);
+            if (!user) {
+                document.getElementById('loginError').innerText = currentLang === 'ar' ? 'بريد أو كلمة مرور غير صحيحة' : 'Invalid email or password';
+                return;
+            }
+            if (user.active === false) {
+                document.getElementById('loginError').innerText = currentLang === 'ar' ? 'هذا الحساب معطل. تواصل مع المشرف.' : 'Account disabled. Contact admin.';
+                return;
+            }
+            const sessionUser = {
+                email: user.email, name: user.name, role: user.role, phone: user.phone,
+                silverPoints: user.silverPoints, verified: user.verified
+            };
+            sessionStorage.setItem('currentUser', JSON.stringify(sessionUser));
+            if (user.role === 'senior') location.href = 'senior-dashboard.html';
+            else if (user.role === 'volunteer') location.href = 'volunteer-dashboard.html';
+            else if (user.role === 'proxy') location.href = 'proxy-dashboard.html';
+            else if (user.role === 'admin') location.href = 'admin-dashboard.html';
+        };
+
+        // ---------- OTP وإنشاء حساب ----------
+        let pendingOtpEmail = null;
+        let otpVerified = false;
+        document.getElementById('sendOtpBtn').onclick = () => {
+            const email = document.getElementById('signupEmail').value.trim();
+            if (!email) { alert(currentLang === 'ar' ? 'أدخل البريد الإلكتروني' : 'Enter email'); return; }
+            pendingOtpEmail = email;
+            document.getElementById('otpDiv').style.display = 'block';
+            document.getElementById('otpSentMsg').innerHTML = currentLang === 'ar' ? `✅ تم إرسال OTP إلى ${email} (استخدم 123456)` : `✅ OTP sent to ${email} (use 123456)`;
+            otpVerified = false;
+        };
+        document.getElementById('verifyOtpBtn').onclick = () => {
+            const code = document.getElementById('otpCode').value.trim();
+            if (code === '123456') {
+                otpVerified = true;
+                document.getElementById('otpVerifyMsg').innerHTML = currentLang === 'ar' ? '<span style="color:#10b981;">✔ تم التحقق</span>' : '<span style="color:#10b981;">✔ Verified</span>';
+                document.getElementById('signupStep1').style.display = 'none';
+                document.getElementById('signupStep2').style.display = 'block';
+            } else {
+                document.getElementById('otpVerifyMsg').innerHTML = currentLang === 'ar' ? '<span style="color:#dc2626;">رمز خاطئ</span>' : '<span style="color:#dc2626;">Wrong code</span>';
+            }
+        };
+        document.getElementById('doSignup').onclick = () => {
+            if (!otpVerified) { alert(currentLang === 'ar' ? 'يجب التحقق من OTP أولاً' : 'Verify OTP first'); return; }
+            const name = document.getElementById('signupName').value.trim();
+            const email = pendingOtpEmail;
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('signupConfirm').value;
+            const role = document.getElementById('signupRole').value;
+            const phone = document.getElementById('signupPhone').value.trim();
+            if (!name || !email || !password || !confirm) { alert(currentLang === 'ar' ? 'املأ جميع الحقول' : 'Fill all fields'); return; }
+            if (password !== confirm) { alert(currentLang === 'ar' ? 'كلمة المرور غير متطابقة' : 'Passwords do not match'); return; }
+            if (password.length < 4) { alert(currentLang === 'ar' ? 'كلمة المرور قصيرة جداً' : 'Password too short'); return; }
+            let users = JSON.parse(localStorage.getItem('users'));
+            if (users.find(u => u.email === email)) { alert(currentLang === 'ar' ? 'البريد موجود مسبقاً' : 'Email already exists'); return; }
+            let silverPoints = role === 'senior' ? 150 : (role === 'volunteer' ? 350 : (role === 'proxy' ? 200 : 0));
+            const newUser = { email, password, name, role, phone, silverPoints, verified: (role !== 'volunteer'), active: true };
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            sessionStorage.setItem('currentUser', JSON.stringify({ email, name, role, phone, silverPoints, verified: newUser.verified }));
+            if (role === 'senior') location.href = 'senior-dashboard.html';
+            else if (role === 'volunteer') location.href = 'volunteer-dashboard.html';
+            else if (role === 'proxy') location.href = 'proxy-dashboard.html';
+            else if (role === 'admin') location.href = 'admin-dashboard.html';
+        };
+
+        // ---------- تبديل بين نماذج الدخول والتسجيل ----------
+        document.getElementById('showLogin').onclick = () => {
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('signupPanel').style.display = 'none';
+            document.getElementById('showLogin').classList.add('active');
+            document.getElementById('showSignup').classList.remove('active');
+        };
+        document.getElementById('showSignup').onclick = () => {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('signupPanel').style.display = 'block';
+            document.getElementById('showSignup').classList.add('active');
+            document.getElementById('showLogin').classList.remove('active');
+            // إعادة تعيين
+            document.getElementById('signupStep1').style.display = 'block';
+            document.getElementById('signupStep2').style.display = 'none';
+            document.getElementById('otpDiv').style.display = 'none';
+            document.getElementById('signupName').value = '';
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('otpCode').value = '';
+            document.getElementById('signupPassword').value = '';
+            document.getElementById('signupConfirm').value = '';
+            document.getElementById('otpSentMsg').innerHTML = '';
+            document.getElementById('otpVerifyMsg').innerHTML = '';
+            otpVerified = false;
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* style.css - تصميم عصري متجاوب */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Cairo', 'Segoe UI', sans-serif;
+    background: linear-gradient(145deg, #f0f7ff 0%, #e9eefa 100%);
+    min-height: 100vh;
+    padding: 2rem;
+    color: #1e293b;
+}
+
+/* حاوية رئيسية */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(2px);
+    border-radius: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    padding: 2rem;
+    transition: all 0.3s;
+}
+
+/* ترويسة */
+h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e4b8f, #2b6ed7);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 0.5rem;
+}
+h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f3b6f;
+    margin: 1.5rem 0 1rem;
+    border-right: 5px solid #2b6ed7;
+    padding-right: 1rem;
+}
+h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0.5rem 0;
+}
+
+/* بطاقات */
+.card {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px -12px rgba(43, 110, 215, 0.2);
+    border-color: #b9d0f8;
+}
+
+/* شبكات مرنة */
+.grid-auto {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+/* أزرار */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(95deg, #1e4b8f, #2b6ed7);
+    color: white;
+    font-weight: 600;
+    padding: 0.8rem 1.8rem;
+    border-radius: 3rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+    text-decoration: none;
+}
+.btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(43, 110, 215, 0.3);
+}
+.btn-outline {
+    background: transparent;
+    border: 2px solid #2b6ed7;
+    color: #1e4b8f;
+}
+.btn-danger {
+    background: linear-gradient(95deg, #dc2626, #b91c1c);
+}
+.btn-success {
+    background: linear-gradient(95deg, #10b981, #059669);
+}
+
+/* نماذج الإدخال */
+input, select, textarea {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 50px;
+    border: 1px solid #cbd5e1;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    transition: 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2b6ed7;
+    box-shadow: 0 0 0 3px rgba(43, 110, 215, 0.2);
+}
+
+/* تذييل */
+footer {
+    margin-top: 3rem;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1.5rem;
+    color: #475569;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+/* عناصر الطوارئ */
+.sos-btn {
+    background: #dc2626;
+    font-size: 1.8rem;
+    padding: 1rem 2rem;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0.7);}
+    70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(220,38,38,0);}
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0);}
+}
+
+/* شريط التنقل */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* نقطة رصيد */
+.points-badge {
+    background: #0f3b6f;
+    color: white;
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* استجابة */
+@media (max-width: 768px) {
+    body { padding: 1rem; }
+    .container { padding: 1.2rem; }
+    h1 { font-size: 1.6rem; }
+    .btn { padding: 0.6rem 1.2rem; }
+}

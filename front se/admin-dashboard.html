@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المشرف</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1e293b; padding: 2rem; }
+        .container { max-width: 1400px; margin: auto; background: white; border-radius: 2rem; padding: 2rem; }
+        .admin-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; border-bottom: 2px solid #eee; padding-bottom: 1rem; }
+        .admin-nav a { background: #f1f5f9; padding: 0.5rem 1rem; border-radius: 2rem; text-decoration: none; color: #1e293b; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: linear-gradient(135deg, #1e4b8f, #2b6ed7); color: white; border-radius: 1rem; padding: 1rem; text-align: center; }
+        .content-panel { background: #f8fafc; border-radius: 1.5rem; padding: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.5rem; text-align: center; border-bottom: 1px solid #ddd; }
+        .btn-small { background: #2b6ed7; color: white; border: none; padding: 2px 8px; border-radius: 30px; cursor: pointer; }
+        .btn-danger { background: #dc2626; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="admin-nav">
+        <a href="#" onclick="showPanel('users')">👥 المستخدمين</a>
+        <a href="#" onclick="showPanel('requests')">📋 الطلبات</a>
+        <a href="#" onclick="showPanel('cases')">⚖️ البلاغات</a>
+        <a href="#" onclick="showPanel('logs')">📜 سجل النظام</a>
+        <a href="#" onclick="showPanel('settings')">⚙️ الإعدادات</a>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div id="dynamicPanel" class="content-panel">اختر أحد الأقسام</div>
+</div>
+<script>
+    let user = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!user || user.role !== 'admin') window.location.href = 'index.html';
+
+    function updateStats() {
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let requests = JSON.parse(localStorage.getItem('helpRequests')) || [];
+        let reports = JSON.parse(localStorage.getItem('reports')) || [];
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card">👥 المستخدمين: ${users.length}</div>
+            <div class="stat-card">📋 الطلبات: ${requests.length}</div>
+            <div class="stat-card">⚖️ البلاغات: ${reports.filter(r=>r.status==='pending').length}</div>
+            <div class="stat-card">🚨 SOS: ${(JSON.parse(localStorage.getItem('sosLog'))||[]).length}</div>
+        `;
+    }
+    function showUsers() {
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let html = '<h3>إدارة المستخدمين</h3><table><tr><th>البريد</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إجراء</th></tr>';
+        users.forEach(u => {
+            html += `<tr><td>${u.email}</td><td>${u.name}</td><td>${u.role}</td><td>${u.active !== false ? 'نشط' : 'محظور'}</td>
+            <td><button class="btn-small" onclick="toggleUser('${u.email}')">${u.active === false ? 'تفعيل' : 'تعطيل'}</button></td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('dynamicPanel').innerHTML = html;
+    }
+    function showRequests() {
+        let reqs = JSON.parse(localStorage.getItem('helpRequests')) || [];
+        let html = '<h3>جميع الطلبات</h3><table><tr><th>النوع</th><th>المسن</th><th>الحالة</th><th>متطوع</th><th>تاريخ</th></tr>';
+        reqs.forEach(r => {
+            html += `<tr><td>${r.type}</td><td>${r.seniorName}</td><td>${r.status}</td><td>${r.volunteerName || '-'}</td><td>${r.date}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('dynamicPanel').innerHTML = html;
+    }
+    function showCases() {
+        let reports = JSON.parse(localStorage.getItem('reports')) || [];
+        let html = '<h3>البلاغات المقدمة</h3><table><tr><th>مقدم البلاغ</th><th>المبلغ ضده</th><th>السبب</th><th>الحالة</th><th>إجراء</th></tr>';
+        reports.forEach((r, idx) => {
+            html += `<tr><td>${r.reporter}</td><td>${r.reported}</td><td>${r.reason}</td><td>${r.status}</td>
+            <td><button class="btn-small" onclick="resolveCase(${idx})">حل</button></td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('dynamicPanel').innerHTML = html;
+    }
+    function showLogs() {
+        let ledger = JSON.parse(localStorage.getItem('ledger')) || [];
+        let sos = JSON.parse(localStorage.getItem('sosLog')) || [];
+        let html = '<h3>سجل المعاملات</h3><ul>';
+        ledger.slice(-20).forEach(l => html += `<li>${new Date(l.date).toLocaleString()} - ${l.desc} (${l.points} نقطة)</li>`);
+        html += '</ul><h3>سجل SOS</h3><ul>';
+        sos.forEach(s => html += `<li>${new Date(s.time).toLocaleString()} - ${s.userId}</li>`);
+        html += '</ul>';
+        document.getElementById('dynamicPanel').innerHTML = html;
+    }
+    function showSettings() {
+        let emergencyNumbers = JSON.parse(localStorage.getItem('emergencyNumbers')) || { police: '122', ambulance: '123', fire: '180' };
+        let html = `<h3>إعدادات أرقام الطوارئ</h3>
+            <label>الشرطة: <input type="text" id="police" value="${emergencyNumbers.police}"></label><br>
+            <label>الإسعاف: <input type="text" id="ambulance" value="${emergencyNumbers.ambulance}"></label><br>
+            <label>المطافي: <input type="text" id="fire" value="${emergencyNumbers.fire}"></label><br>
+            <button class="btn-small" onclick="saveEmergencyNumbers()">حفظ</button>`;
+        document.getElementById('dynamicPanel').innerHTML = html;
+    }
+    window.toggleUser = (email) => {
+        let users = JSON.parse(localStorage.getItem('users'));
+        let idx = users.findIndex(u => u.email === email);
+        if (idx !== -1) users[idx].active = users[idx].active === false ? true : false;
+        localStorage.setItem('users', JSON.stringify(users));
+        showUsers();
+        updateStats();
+    };
+    window.resolveCase = (idx) => {
+        let reports = JSON.parse(localStorage.getItem('reports'));
+        reports[idx].status = 'resolved';
+        localStorage.setItem('reports', JSON.stringify(reports));
+        showCases();
+    };
+    window.saveEmergencyNumbers = () => {
+        let nums = { police: document.getElementById('police').value, ambulance: document.getElementById('ambulance').value, fire: document.getElementById('fire').value };
+        localStorage.setItem('emergencyNumbers', JSON.stringify(nums));
+        alert('تم حفظ أرقام الطوارئ');
+    };
+    window.showPanel = (panel) => {
+        if (panel === 'users') showUsers();
+        else if (panel === 'requests') showRequests();
+        else if (panel === 'cases') showCases();
+        else if (panel === 'logs') showLogs();
+        else if (panel === 'settings') showSettings();
+    };
+    updateStats();
+    showUsers();
+</script>
+</body>
+</html>
